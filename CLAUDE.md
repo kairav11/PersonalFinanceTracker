@@ -321,7 +321,7 @@ git diff --staged | grep -E "(dapi[a-zA-Z0-9]{32}|AIza[0-9A-Za-z_-]{35})"
 
 ### dbt
 - Every model must have a `description:` field in its `schema.yml` entry.
-- No catalog prefix needed — Hive Metastore uses two-part names (`database.table`). Do not set `catalog` in `dbt_project.yml`.
+- Unity Catalog is active (`workspace` catalog). Tables are three-part `workspace.schema.table`. Set `catalog: workspace` in `profiles.yml` — do not hardcode it in `dbt_project.yml`.
 - Run `dbt compile` before `dbt run` when editing models — catches Jinja/SQL errors without consuming compute.
 - Add `--fail-fast` in CI `dbt test` runs so the first failure stops immediately rather than running all tests.
 - Keep model SQL readable: one CTE per logical step, named descriptively.
@@ -419,4 +419,4 @@ These were resolved during planning — do not re-open without good reason:
 | Visualization | Streamlit Community Cloud | Free public URL for recruiter sharing |
 | Materialization | Full refresh tables | Correct and simple at this data volume |
 | Auth | Service Account (not OAuth) | Works headlessly in CI |
-| Databricks tier | Community Edition (Hive Metastore) | Free forever; no Unity Catalog; two-part table names |
+| Databricks tier | Community Edition (Unity Catalog) | Free forever; `workspace` catalog; three-part table names (`workspace.schema.table`) |

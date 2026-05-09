@@ -1,5 +1,5 @@
 """
-Google Sheets → bronze.transactions (append) + bronze.budgets (overwrite).
+Google Sheets → workspace.bronze.transactions (append) + workspace.bronze.budgets (overwrite).
 """
 
 import json
@@ -105,7 +105,7 @@ def _fetch_sheet_tab(client: gspread.Client, sheet_id: str, tab_name: str) -> li
 
 def _ensure_bronze_tables(cursor) -> None:
     cursor.execute("""
-        CREATE TABLE IF NOT EXISTS bronze.transactions (
+        CREATE TABLE IF NOT EXISTS workspace.bronze.transactions (
             transaction_id STRING,
             date           STRING,
             merchant       STRING,
@@ -120,7 +120,7 @@ def _ensure_bronze_tables(cursor) -> None:
         ) USING DELTA
     """)
     cursor.execute("""
-        CREATE TABLE IF NOT EXISTS bronze.budgets (
+        CREATE TABLE IF NOT EXISTS workspace.bronze.budgets (
             category           STRING,
             monthly_budget_eur STRING,
             _ingested_at       TIMESTAMP
@@ -137,7 +137,7 @@ def _append_transactions(cursor, rows: list[dict], ingested_at: datetime) -> Non
     for row in rows:
         cursor.execute(
             """
-            INSERT INTO bronze.transactions
+            INSERT INTO workspace.bronze.transactions
                 (transaction_id, date, merchant, amount, currency, type,
                  category, account, notes, _source, _ingested_at)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -161,14 +161,14 @@ def _append_transactions(cursor, rows: list[dict], ingested_at: datetime) -> Non
 
 @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=2, max=10))
 def _overwrite_budgets(cursor, rows: list[dict], ingested_at: datetime) -> None:
-    cursor.execute("DELETE FROM bronze.budgets")
+    cursor.execute("DELETE FROM workspace.bronze.budgets")
     if not rows:
         logger.info("No budget rows to write")
         return
     for row in rows:
         cursor.execute(
             """
-            INSERT INTO bronze.budgets (category, monthly_budget_eur, _ingested_at)
+            INSERT INTO workspace.bronze.budgets (category, monthly_budget_eur, _ingested_at)
             VALUES (?, ?, ?)
             """,
             (

@@ -2,7 +2,7 @@
 
 ## 1. What I Am Building
 
-Wealth-Flow Lakehouse is a production-grade Data Lakehouse built on **Databricks**, designed to automate personal financial auditing. Moving beyond traditional spreadsheets, this project implements a professional **Medallion Architecture** using **dbt**, **Delta Lake**, and **Hive Metastore** (Databricks Community Edition).
+Wealth-Flow Lakehouse is a production-grade Data Lakehouse built on **Databricks**, designed to automate personal financial auditing. Moving beyond traditional spreadsheets, this project implements a professional **Medallion Architecture** using **dbt**, **Delta Lake**, and **Unity Catalog** (Databricks `workspace` catalog).
 
 The pipeline ingests personal transaction and budget data from **Google Sheets** and/or **CSV uploads**, converts all amounts to **EUR** via fixed exchange rates, and produces business-level analytical views surfaced in a publicly hosted **Streamlit dashboard** — automatically refreshed every 3 days via **GitHub Actions**.
 
@@ -14,7 +14,7 @@ The pipeline ingests personal transaction and budget data from **Google Sheets**
 |---|---|---|
 | Source A | Google Sheets (2 tabs) | Manual data entry interface |
 | Source B | CSV uploads (`csv_uploads/`) | Bulk import from any export |
-| Infrastructure | Databricks Community Edition | Spark cluster + Hive Metastore |
+| Infrastructure | Databricks Community Edition | Spark cluster + Unity Catalog (`workspace`) |
 | Storage | Delta Lake | ACID-compliant, versioned storage |
 | FX Rates | dbt seed (`fx_rates.csv`) | Fixed EUR conversion rates |
 | Transformation | dbt Core v1.8+ (`dbt-databricks`) | All Silver/Gold logic |
@@ -137,19 +137,19 @@ Exchange rates are **fixed** and stored as a dbt seed (`seeds/fx_rates.csv`). No
 
 ---
 
-## 6. Database Structure (Hive Metastore — Community Edition)
+## 6. Database Structure (Unity Catalog — `workspace` catalog)
 
-No Unity Catalog. Tables are referenced as `database.table` (two-part names only).
+Tables use three-part Unity Catalog naming: `workspace.schema.table`.
 
 ```
-Hive Metastore
-├── Database: bronze
+Unity Catalog: workspace
+├── Schema: bronze
 │   ├── transactions    (raw from all sources — append-only, _source tagged)
 │   └── budgets         (raw from Google Sheets — full overwrite each run)
-├── Database: silver
+├── Schema: silver
 │   ├── stg_transactions  (deduplicated, typed, amount_eur added)
 │   └── stg_budgets       (typed, validated)
-└── Database: gold
+└── Schema: gold
     ├── fct_monthly_burn         (monthly spend + income by category, EUR)
     ├── fct_budget_variance      (actual vs. budgeted by category + month)
     ├── fct_income_vs_expense    (net cash flow by month)
@@ -382,7 +382,7 @@ dashboard/
 
 ## 13. Assumptions & Constraints
 
-- **Databricks Community Edition** is free forever but uses Hive Metastore (no Unity Catalog). All table references are two-part `database.table`. The lightweight pipeline stays well within Community Edition compute limits.
+- **Databricks Community Edition** is free forever. The workspace uses Unity Catalog with the `workspace` catalog. All table references are three-part `workspace.schema.table`. The lightweight pipeline stays well within Community Edition compute limits.
 - **Fixed FX rates** mean amounts are not re-valued when rates change. This is intentional for a personal tracker — predictable and auditable. To update rates, edit `fx_rates.csv` and commit.
 - The Google Sheet must be **shared with the service account email** (e.g. `wealth-flow@project-id.iam.gserviceaccount.com`) with at least Viewer access.
 - `transaction_id` values must be unique and non-null in the source. A Google Apps Script to auto-generate UUIDs can be added post-MVP.

@@ -11,7 +11,7 @@
 **Name:** Wealth-Flow Lakehouse  
 **Purpose:** Production-grade personal finance ELT pipeline demonstrating Medallion Architecture  
 **Stack:** Google Sheets + CSV → Python ingestion → Databricks Delta Lake → dbt (Bronze/Silver/Gold) → Streamlit dashboard  
-**Databricks tier:** Community Edition — Hive Metastore (two-part table names: `database.table`)  
+**Databricks tier:** Community Edition — Unity Catalog (`workspace` catalog; three-part table names: `workspace.schema.table`)  
 **Base currency:** EUR (fixed FX: USD 0.926, INR 0.011)  
 **Hosted dashboard:** Streamlit Community Cloud (public URL — recruiter-facing)  
 **Orchestration:** GitHub Actions (every 3 days + CSV push trigger)
@@ -34,7 +34,7 @@ Full specification: `project_spec.md`
 | `.gitignore` | ✅ Complete | Covers credentials, Python, dbt artefacts |
 | Bronze ingestion (Sheets) | ✅ Complete | |
 | Bronze ingestion (CSV) | ✅ Complete | |
-| dbt Silver layer | ⬜ Not started | Day 3 task |
+| dbt Silver layer | ✅ Complete | |
 | dbt Gold layer | ⬜ Not started | Day 4 task |
 | GitHub Actions workflows | ⬜ Not started | Day 5 task |
 | Streamlit dashboard | ⬜ Not started | Day 6 task |
@@ -43,6 +43,51 @@ Full specification: `project_spec.md`
 ---
 
 ## Changelog
+
+### [v0.3] — 2026-05-09 — dbt Silver layer complete + Unity Catalog migration
+**Commit:** pending  
+**Branch:** `feature/silver-dbt`
+
+**Achieved:**
+- Built full dbt project structure: `dbt_project.yml`, `profiles.yml`, `packages.yml`, `macros/`, `seeds/`, `models/`
+- `seeds/fx_rates.csv`: fixed FX rates (EUR=1.0, USD=0.926, INR=0.011) loaded into `workspace.silver.fx_rates`
+- `macros/generate_schema_name.sql`: overrides dbt default so custom schemas are used as-is (e.g. `silver`, not `silver_silver`)
+- `models/sources.yml`: declares `workspace.bronze.transactions` and `workspace.bronze.budgets` as dbt sources
+- `silver/stg_transactions.sql`: deduplication (latest `_ingested_at` wins), type casting, string cleaning, FX join → `amount_eur`
+- `silver/stg_budgets.sql`: casts `monthly_budget_eur` to DECIMAL, filters nulls
+- `silver/schema.yml`: 19 tests — unique, not_null, accepted_values, expression_is_true — all passing
+- **Unity Catalog discovery**: workspace uses UC (`workspace` catalog), not Hive Metastore. Fixed `profiles.yml` (`catalog: workspace`), `sources.yml`, and both ingestion scripts (three-part table names). All docs updated.
+- Fixed `dbt_utils.expression_is_true` syntax: expression must be operator-only (e.g. `> 0`), not include the column name.
+
+**Files changed:**
+```
+wealth_flow_dbt/dbt_project.yml              (created)
+wealth_flow_dbt/profiles.yml                 (created)
+wealth_flow_dbt/packages.yml                 (created)
+wealth_flow_dbt/seeds/fx_rates.csv           (created)
+wealth_flow_dbt/macros/generate_schema_name.sql (created)
+wealth_flow_dbt/models/sources.yml           (created)
+wealth_flow_dbt/models/silver/stg_transactions.sql (created)
+wealth_flow_dbt/models/silver/stg_budgets.sql (created)
+wealth_flow_dbt/models/silver/schema.yml     (created)
+ingestion/ingest_bronze.py                   (updated — three-part table names)
+ingestion/ingest_csv.py                      (updated — three-part table names)
+project_plan.md                              (updated — UC throughout)
+project_spec.md                              (updated — §5.3 UC naming)
+CLAUDE.md                                    (updated — UC in dbt section + decisions table)
+docs/project_log.md                          (this file)
+```
+
+**Known issues / follow-ups:**
+- `dbt_packages/` (created by `dbt deps`) must not be committed — confirm it is in `.gitignore`
+- Gold layer (`workspace.gold.*`) schemas do not exist yet — created in Day 4
+
+**Updated status table rows:**
+| Component | Old status | New status |
+|---|---|---|
+| dbt Silver layer | ⬜ Not started | ✅ Complete |
+
+
 
 ### [v0.2] — 2026-05-09 — Bronze ingestion complete
 **Commit:** pending  
