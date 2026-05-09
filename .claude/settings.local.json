@@ -1,8 +1,0 @@
-{
-  "permissions": {
-    "allow": [
-      "Bash(git ls-files *)",
-      "Bash(grep -E \"\\(dapi[a-zA-Z0-9]{30,}|AIza[0-9A-Za-z_-]{35}\\)\")"
-    ]
-  }
-}
