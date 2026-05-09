@@ -37,12 +37,48 @@ Full specification: `project_spec.md`
 | dbt Silver layer | ✅ Complete | |
 | dbt Gold layer | ✅ Complete | |
 | GitHub Actions workflows | ✅ Complete | |
-| Streamlit dashboard | ⬜ Not started | Day 6 task |
+| Streamlit dashboard | ✅ Complete | |
 | End-to-end validation | ⬜ Not started | Day 7 task |
 
 ---
 
 ## Changelog
+
+### [v0.6] — 2026-05-09 — Streamlit dashboard complete
+**Commit:** pending  
+**Branch:** `feature/streamlit-dashboard`
+
+**Achieved:**
+- `dashboard/app.py`: 5-panel public dashboard reading Gold tables only
+  - Panel 1: Monthly Burn — stacked bar by category (expenses only)
+  - Panel 2: Budget Variance — grouped bar with month selector; captions over-budget categories
+  - Panel 3: Income vs Expense — line chart with income, expense, net lines
+  - Panel 4: Subscriptions — sortable dataframe sorted by monthly cost
+  - Panel 5: YTD Summary — 3 KPI metric tiles at top of page
+- All Databricks queries wrapped with `@st.cache_data(ttl=3600)` — 1-hour cache
+- Empty state handled with `st.info()` per panel; connection errors show `st.error()`
+- `dashboard/requirements.txt`: 5 dependencies pinned
+- `dashboard/.streamlit/secrets.toml.example`: safe placeholder template (no real values)
+- Verified working locally against live Gold tables
+
+**Files changed:**
+```
+dashboard/app.py                              (created)
+dashboard/requirements.txt                   (created)
+dashboard/.streamlit/secrets.toml.example    (created)
+docs/project_log.md                          (updated)
+```
+
+**Known issues / follow-ups:**
+- Deploy to Streamlit Community Cloud (Day 7 task — add secrets via Streamlit UI)
+- Use a separate read-only Databricks token for the dashboard (currently using the same ingestion token)
+
+**Updated status table rows:**
+| Component | Old status | New status |
+|---|---|---|
+| Streamlit dashboard | ⬜ Not started | ✅ Complete |
+
+
 
 ### [v0.5] — 2026-05-09 — GitHub Actions workflows live
 **Commit:** pending  
