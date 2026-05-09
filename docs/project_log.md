@@ -45,7 +45,7 @@ Full specification: `project_spec.md`
 ## Changelog
 
 ### [v1.0] — 2026-05-10 — Project complete: public repo ready
-**Commit:** pending  
+**Commit:** `6716c0e`  
 **Branch:** `feature/streamlit-dashboard`
 
 **Achieved:**
