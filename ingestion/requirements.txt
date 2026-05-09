@@ -1,0 +1,7 @@
+databricks-sql-connector==3.4.0
+gspread==6.1.2
+google-auth==2.29.0
+python-dotenv==1.0.1
+pandas==2.2.2
+tenacity==8.3.0
+pyarrow==16.1.0
