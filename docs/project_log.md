@@ -38,14 +38,41 @@ Full specification: `project_spec.md`
 | dbt Gold layer | ✅ Complete | |
 | GitHub Actions workflows | ✅ Complete | |
 | Streamlit dashboard | ✅ Complete | |
-| End-to-end validation | ⬜ Not started | Day 7 task |
+| End-to-end validation | ✅ Complete | |
 
 ---
 
 ## Changelog
 
-### [v0.6] — 2026-05-09 — Streamlit dashboard complete
+### [v0.7] — 2026-05-09 — Day 7 validation: YTD delta fix + gitignore hardening
 **Commit:** pending  
+**Branch:** `feature/streamlit-dashboard`
+
+**Achieved:**
+- `dashboard/app.py`: fixed YTD Net Savings delta — now correctly compares current-year net savings vs previous year's net for the same calendar months (not self-referential)
+- `dashboard/app.py`: fixed delta string format using `:+,.2f` so Streamlit renders green/up arrow for positive deltas and red/down arrow for negative deltas (Streamlit requires string to start with `+` or `-`, not `€`)
+- `.gitignore`: restored `.claude` entry (Claude Code local settings); added `wealth_flow_dbt/package-lock.yml` (dbt-generated, should not be committed)
+- End-to-end validation checklist run (see §9 of `project_spec.md`)
+
+**Files changed:**
+```
+dashboard/app.py          (updated — YTD delta logic + color fix)
+.gitignore                (updated — .claude + package-lock.yml entries)
+docs/project_log.md       (updated)
+```
+
+**Known issues / follow-ups:**
+- None — project complete
+
+**Updated status table rows:**
+| Component | Old status | New status |
+|---|---|---|
+| End-to-end validation | ⬜ Not started | ✅ Complete |
+
+---
+
+### [v0.6] — 2026-05-09 — Streamlit dashboard complete
+**Commit:** `3b5456e`  
 **Branch:** `feature/streamlit-dashboard`
 
 **Achieved:**

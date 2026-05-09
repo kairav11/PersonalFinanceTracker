@@ -74,16 +74,31 @@ try:
         _empty("income vs expense")
     else:
         current_year = str(date.today().year)
-        ytd = ive[ive["year_month"].str.startswith(current_year)]
+        prev_year    = str(date.today().year - 1)
+
+        ytd      = ive[ive["year_month"].str.startswith(current_year)]
+        ytd_months = set(ytd["year_month"].str[5:])  # e.g. {"01", "02", "03"}
+
+        prev_ytd = ive[
+            ive["year_month"].str.startswith(prev_year) &
+            ive["year_month"].str[5:].isin(ytd_months)
+        ]
+
         ytd_income  = float(ytd["total_income_eur"].sum())
         ytd_expense = float(ytd["total_expense_eur"].sum())
         ytd_net     = ytd_income - ytd_expense
+        prev_net    = float(prev_ytd["net_eur"].sum()) if not prev_ytd.empty else None
+        net_delta   = (ytd_net - prev_net) if prev_net is not None else None
 
         c1, c2, c3 = st.columns(3)
-        c1.metric("YTD Total Earned (EUR)",  f"€{ytd_income:,.2f}")
-        c2.metric("YTD Total Spent (EUR)",   f"€{ytd_expense:,.2f}")
-        c3.metric("YTD Net Savings (EUR)",   f"€{ytd_net:,.2f}",
-                  delta=f"€{ytd_net:,.2f}", delta_color="normal")
+        c1.metric("YTD Total Earned (EUR)", f"€{ytd_income:,.2f}")
+        c2.metric("YTD Total Spent (EUR)",  f"€{ytd_expense:,.2f}")
+        c3.metric(
+            "YTD Net Savings (EUR)",
+            f"€{ytd_net:,.2f}",
+            delta=f"{net_delta:+,.2f} EUR vs same period last year" if net_delta is not None else None,
+            delta_color="normal",
+        )
 except Exception as exc:
     st.error(f"Could not load YTD summary: {exc}")
 
