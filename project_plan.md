@@ -2,7 +2,7 @@
 
 ## 1. What I Am Building
 
-Wealth-Flow Lakehouse is a production-grade Data Lakehouse built on **Databricks**, designed to automate personal financial auditing. Moving beyond traditional spreadsheets, this project implements a professional **Medallion Architecture** using **dbt**, **Delta Lake**, and **Unity Catalog**.
+Wealth-Flow Lakehouse is a production-grade Data Lakehouse built on **Databricks**, designed to automate personal financial auditing. Moving beyond traditional spreadsheets, this project implements a professional **Medallion Architecture** using **dbt**, **Delta Lake**, and **Hive Metastore** (Databricks Community Edition).
 
 The pipeline ingests personal transaction and budget data from **Google Sheets** and/or **CSV uploads**, converts all amounts to **EUR** via fixed exchange rates, and produces business-level analytical views surfaced in a publicly hosted **Streamlit dashboard** — automatically refreshed every 3 days via **GitHub Actions**.
 
@@ -14,9 +14,8 @@ The pipeline ingests personal transaction and budget data from **Google Sheets**
 |---|---|---|
 | Source A | Google Sheets (2 tabs) | Manual data entry interface |
 | Source B | CSV uploads (`csv_uploads/`) | Bulk import from any export |
-| Infrastructure | Databricks Free Edition | Serverless SQL Warehouse + Unity Catalog |
+| Infrastructure | Databricks Community Edition | Spark cluster + Hive Metastore |
 | Storage | Delta Lake | ACID-compliant, versioned storage |
-| Governance | Unity Catalog | Lineage, metadata, access control |
 | FX Rates | dbt seed (`fx_rates.csv`) | Fixed EUR conversion rates |
 | Transformation | dbt Core v1.8+ (`dbt-databricks`) | All Silver/Gold logic |
 | Orchestration | GitHub Actions | CI/CD + 3-day scheduled pipeline + CSV trigger |
@@ -38,7 +37,7 @@ CSV files in csv_uploads/
           v
 ╔══════════════════════════════════╗
 ║   BRONZE LAYER (Raw Delta)       ║
-║   wealth_flow.bronze.*           ║
+║   bronze.*          (Hive DB)    ║
 ║   - transactions  (_source tag)  ║
 ║   - budgets                      ║
 ╚══════════════════════════════════╝
@@ -46,7 +45,7 @@ CSV files in csv_uploads/
           v  (dbt)
 ╔══════════════════════════════════╗
 ║   SILVER LAYER (Curated)         ║
-║   wealth_flow.silver.*           ║
+║   silver.*          (Hive DB)    ║
 ║   - stg_transactions             ║
 ║   - stg_budgets                  ║
 ╚══════════════════════════════════╝
@@ -61,7 +60,7 @@ CSV files in csv_uploads/
           v
 ╔══════════════════════════════════╗
 ║   GOLD LAYER (Analytical)        ║
-║   wealth_flow.gold.*             ║
+║   gold.*            (Hive DB)    ║
 ║   - fct_monthly_burn             ║
 ║   - fct_budget_variance          ║
 ║   - fct_income_vs_expense        ║
@@ -138,21 +137,30 @@ Exchange rates are **fixed** and stored as a dbt seed (`seeds/fx_rates.csv`). No
 
 ---
 
-## 6. Unity Catalog Structure
+## 6. Database Structure (Hive Metastore — Community Edition)
+
+No Unity Catalog. Tables are referenced as `database.table` (two-part names only).
 
 ```
-Catalog:  wealth_flow
-├── Schema: bronze
+Hive Metastore
+├── Database: bronze
 │   ├── transactions    (raw from all sources — append-only, _source tagged)
 │   └── budgets         (raw from Google Sheets — full overwrite each run)
-├── Schema: silver
+├── Database: silver
 │   ├── stg_transactions  (deduplicated, typed, amount_eur added)
 │   └── stg_budgets       (typed, validated)
-└── Schema: gold
+└── Database: gold
     ├── fct_monthly_burn         (monthly spend + income by category, EUR)
     ├── fct_budget_variance      (actual vs. budgeted by category + month)
     ├── fct_income_vs_expense    (net cash flow by month)
     └── dim_subscription_tracker (recurring charge detection)
+```
+
+Create these databases once in a Databricks notebook before running the pipeline:
+```sql
+CREATE DATABASE IF NOT EXISTS bronze;
+CREATE DATABASE IF NOT EXISTS silver;
+CREATE DATABASE IF NOT EXISTS gold;
 ```
 
 ---
@@ -213,14 +221,14 @@ Grain: one row per recurring merchant.
 
 ### `ingestion/ingest_bronze.py` — Google Sheets source
 - Authenticates via **Service Account** (JSON key from `GOOGLE_SERVICE_ACCOUNT_JSON` GitHub Secret)
-- Reads `Transactions` tab → appends to `wealth_flow.bronze.transactions` with `_source = 'google_sheets'`
-- Reads `Budgets` tab → overwrites `wealth_flow.bronze.budgets`
+- Reads `Transactions` tab → appends to `bronze.transactions` with `_source = 'google_sheets'`
+- Reads `Budgets` tab → overwrites `bronze.budgets`
 - Adds `_ingested_at` timestamp to every row
 
 ### `ingestion/ingest_csv.py` — CSV upload source
 - Scans all `.csv` files in `ingestion/csv_uploads/`
 - Validates that columns match the schema in §4.1 — raises a clear error if not
-- Appends valid rows to `wealth_flow.bronze.transactions` with `_source = 'csv_upload'`
+- Appends valid rows to `bronze.transactions` with `_source = 'csv_upload'`
 - Moves processed files to `ingestion/csv_uploads/processed/` (preserves originals for audit)
 - Adds `_ingested_at` timestamp to every row
 - A `csv_uploads/template.csv` is committed to the repo showing the required headers
@@ -320,7 +328,7 @@ dashboard/
 ### Day 1 — Infrastructure Setup
 - [ ] Create GitHub repository, clone locally
 - [ ] Sign up for Databricks Free Edition, create workspace
-- [ ] In Unity Catalog: create `wealth_flow` catalog + `bronze`, `silver`, `gold` schemas
+- [x] Create Hive databases in a Databricks notebook: `CREATE DATABASE IF NOT EXISTS bronze/silver/gold`
 - [ ] Create Google Cloud project, enable Sheets API, create Service Account, download JSON key
 - [ ] Create the Google Sheet with 2 tabs matching schemas in §4.1 and §4.2
 - [ ] Share the Google Sheet with the service account email address
@@ -331,7 +339,7 @@ dashboard/
 ### Day 2 — Bronze Ingestion (Both Sources)
 - [ ] Write `ingestion/ingest_bronze.py` (Google Sheets → Bronze, `_source = 'google_sheets'`)
 - [ ] Write `ingestion/ingest_csv.py` (CSV → Bronze, `_source = 'csv_upload'`, moves to `processed/`)
-- [ ] Test locally: verify `wealth_flow.bronze.transactions` and `wealth_flow.bronze.budgets` exist
+- [ ] Test locally: verify `bronze.transactions` and `bronze.budgets` exist
 - [ ] Test CSV path: drop a test CSV, run `ingest_csv.py`, verify rows tagged correctly
 - [ ] Confirm `_ingested_at` and `_source` columns present on all rows
 
@@ -374,7 +382,7 @@ dashboard/
 
 ## 13. Assumptions & Constraints
 
-- **Databricks Free Edition** has limited compute hours — the lightweight pipeline (2 ingestion scripts + dbt) stays well within limits.
+- **Databricks Community Edition** is free forever but uses Hive Metastore (no Unity Catalog). All table references are two-part `database.table`. The lightweight pipeline stays well within Community Edition compute limits.
 - **Fixed FX rates** mean amounts are not re-valued when rates change. This is intentional for a personal tracker — predictable and auditable. To update rates, edit `fx_rates.csv` and commit.
 - The Google Sheet must be **shared with the service account email** (e.g. `wealth-flow@project-id.iam.gserviceaccount.com`) with at least Viewer access.
 - `transaction_id` values must be unique and non-null in the source. A Google Apps Script to auto-generate UUIDs can be added post-MVP.

@@ -1,0 +1,4 @@
+transaction_id,date,merchant,amount,currency,type,category,account,notes
+txn_example1,2026-01-15,Netflix,15.99,EUR,expense,Subscriptions,HDFC Savings,Monthly plan
+txn_example2,2026-01-20,Employer,3000.00,EUR,income,Salary,HDFC Savings,January salary
+txn_example3,2026-01-22,Zara,89.50,USD,expense,Shopping,Chase Checking,Winter jacket
