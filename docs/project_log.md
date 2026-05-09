@@ -45,7 +45,7 @@ Full specification: `project_spec.md`
 ## Changelog
 
 ### [v0.7] — 2026-05-09 — Day 7 validation: YTD delta fix + gitignore hardening
-**Commit:** pending  
+**Commit:** `b2cfabb`  
 **Branch:** `feature/streamlit-dashboard`
 
 **Achieved:**
