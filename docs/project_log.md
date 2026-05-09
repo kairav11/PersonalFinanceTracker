@@ -29,7 +29,7 @@ Full specification: `project_spec.md`
 | Specification | ✅ Complete | `project_spec.md` finalised |
 | CLAUDE.md | ✅ Complete | Security constraints + best practices included |
 | `.env` template | ✅ Complete | All env vars defined, no real secrets |
-| Infrastructure (Databricks) | ✅ Complete | Community Edition workspace + Hive DBs created |
+| Infrastructure (Databricks) | ✅ Complete | Community Edition workspace + Unity Catalog |
 | Infrastructure (Google Cloud) | ✅ Complete | Service Account + Sheets API + Google Sheet created |
 | `.gitignore` | ✅ Complete | Covers credentials, Python, dbt artefacts |
 | Bronze ingestion (Sheets) | ✅ Complete | |
@@ -43,6 +43,34 @@ Full specification: `project_spec.md`
 ---
 
 ## Changelog
+
+### [v1.0] — 2026-05-10 — Project complete: public repo ready
+**Commit:** pending  
+**Branch:** `feature/streamlit-dashboard`
+
+**Achieved:**
+- Streamlit dashboard live on Streamlit Community Cloud (Python 3.12 enforced via UI setting + `runtime.txt`)
+- `dashboard/app.py`: added project summary footer with GitHub repo link
+- `.claude/settings.local.json` removed from git tracking (Claude local config, not project artefact)
+- Full security audit passed: no secrets in tracked files, no sensitive files committed, git history clean
+- All Day 7 manual validation checks passed (dedup, FX conversion, subscription detection, budget variance)
+- Repo safe to make public
+
+**Files changed:**
+```
+dashboard/app.py          (updated — project footer added)
+docs/project_log.md       (updated)
+```
+
+**Known issues / follow-ups:**
+- None — project is feature-complete
+
+**Updated status table rows:**
+| Component | Old status | New status |
+|---|---|---|
+| End-to-end validation | ✅ Complete | ✅ Complete |
+
+---
 
 ### [v0.7] — 2026-05-09 — Day 7 validation: YTD delta fix + gitignore hardening
 **Commit:** `b2cfabb`  

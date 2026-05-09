@@ -228,3 +228,19 @@ try:
         st.dataframe(display, use_container_width=True, hide_index=True)
 except Exception as exc:
     st.error(f"Could not load subscriptions: {exc}")
+
+st.divider()
+
+# ── footer ────────────────────────────────────────────────────────────────────
+
+st.caption(
+    "**About this project** — Wealth-Flow is a personal finance analytics pipeline "
+    "built on the Medallion Architecture: raw transactions from Google Sheets and CSV "
+    "uploads are ingested into Databricks Delta Lake (Bronze), cleaned and deduplicated "
+    "by dbt (Silver), and aggregated into four Gold tables — monthly burn by category, "
+    "income vs. expense trends, budget variance, and recurring subscription detection — "
+    "which power this dashboard. The full stack uses Databricks Community Edition "
+    "(Unity Catalog), dbt Core, Streamlit Community Cloud, and GitHub Actions for "
+    "daily automated orchestration. "
+    "[View source on GitHub →](https://github.com/kairav11/PersonalFinanceTracker)"
+)
