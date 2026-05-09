@@ -107,29 +107,37 @@ def _ensure_bronze_transactions(cursor) -> None:
     """)
 
 
+_BATCH_SIZE = 500
+_ROW_PLACEHOLDER = "(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+
+
+def _build_params(row: dict, ingested_at: datetime) -> tuple:
+    return (
+        _clean_string(row["transaction_id"]),
+        _clean_string(row["date"]),
+        _clean_string(row["merchant"]),
+        str(row["amount"]),
+        _clean_string(row["currency"]).upper(),
+        _clean_string(row["type"]).lower(),
+        _clean_string(row.get("category", "")),
+        _clean_string(row.get("account", "")),
+        _clean_string(row.get("notes", "")),
+        "csv_upload",
+        ingested_at,
+    )
+
+
 @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=2, max=10))
 def _append_rows(cursor, rows: list[dict], ingested_at: datetime) -> int:
-    for row in rows:
+    for i in range(0, len(rows), _BATCH_SIZE):
+        batch = rows[i:i + _BATCH_SIZE]
+        placeholders = ", ".join([_ROW_PLACEHOLDER] * len(batch))
+        flat_params = [p for row in batch for p in _build_params(row, ingested_at)]
         cursor.execute(
-            """
-            INSERT INTO workspace.bronze.transactions
-                (transaction_id, date, merchant, amount, currency, type,
-                 category, account, notes, _source, _ingested_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """,
-            (
-                _clean_string(row["transaction_id"]),
-                _clean_string(row["date"]),
-                _clean_string(row["merchant"]),
-                str(row["amount"]),
-                _clean_string(row["currency"]).upper(),
-                _clean_string(row["type"]).lower(),
-                _clean_string(row.get("category", "")),
-                _clean_string(row.get("account", "")),
-                _clean_string(row.get("notes", "")),
-                "csv_upload",
-                ingested_at,
-            ),
+            f"INSERT INTO workspace.bronze.transactions "
+            f"(transaction_id, date, merchant, amount, currency, type, "
+            f"category, account, notes, _source, _ingested_at) VALUES {placeholders}",
+            flat_params,
         )
     return len(rows)
 
