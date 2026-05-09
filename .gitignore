@@ -38,4 +38,9 @@ Thumbs.db
 *.swp
 *.swo
 
+# Claude Code local settings
 .claude
+
+# dbt generated lock file
+wealth_flow_dbt/package-lock.yml
+
