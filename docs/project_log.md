@@ -36,13 +36,42 @@ Full specification: `project_spec.md`
 | Bronze ingestion (CSV) | ✅ Complete | |
 | dbt Silver layer | ✅ Complete | |
 | dbt Gold layer | ✅ Complete | |
-| GitHub Actions workflows | ⬜ Not started | Day 5 task |
+| GitHub Actions workflows | ✅ Complete | |
 | Streamlit dashboard | ⬜ Not started | Day 6 task |
 | End-to-end validation | ⬜ Not started | Day 7 task |
 
 ---
 
 ## Changelog
+
+### [v0.5] — 2026-05-09 — GitHub Actions workflows live
+**Commit:** pending  
+**Branch:** `feature/github-actions`
+
+**Achieved:**
+- `pipeline.yml`: full pipeline on 3-day cron + manual dispatch — Sheets ingest → seed → Silver run → Silver test (--fail-fast) → Gold run
+- `csv_ingest.yml`: triggered on push to `csv_uploads/*.csv` — CSV ingest → Silver → test → Gold
+- `ci.yml`: runs on every PR — `dbt compile` + `dbt test --select silver --fail-fast` to block broken models from merging
+- All workflows: `permissions: contents: read`, Actions pinned to commit SHA, secrets referenced via `${{ secrets.NAME }}` only, no `set -x`
+
+**Files changed:**
+```
+.github/workflows/pipeline.yml    (created)
+.github/workflows/csv_ingest.yml  (created)
+.github/workflows/ci.yml          (created)
+docs/project_log.md               (updated)
+```
+
+**Known issues / follow-ups:**
+- `actions/setup-python` SHA should be verified against the latest v5 release tag before merging
+- CSV file moves (`processed/`) do not persist in CI since the runner is ephemeral — data integrity maintained by Silver deduplication on `transaction_id`
+
+**Updated status table rows:**
+| Component | Old status | New status |
+|---|---|---|
+| GitHub Actions workflows | ⬜ Not started | ✅ Complete |
+
+
 
 ### [v0.4] — 2026-05-09 — dbt Gold layer complete
 **Commit:** pending  
