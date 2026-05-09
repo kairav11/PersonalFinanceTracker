@@ -1,0 +1,136 @@
+version: 2
+
+models:
+  - name: fct_monthly_burn
+    description: >
+      Monthly spend and income totals by category and type, in EUR.
+      Grain: (year_month, category, type). Includes YTD running total
+      that resets each calendar year.
+    columns:
+      - name: year_month
+        description: Month in YYYY-MM format.
+        tests:
+          - not_null
+
+      - name: category
+        description: Spend or income category.
+        tests:
+          - not_null
+
+      - name: type
+        description: Transaction type — income or expense.
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['income', 'expense']
+
+      - name: total_eur
+        description: Total amount in EUR for this category/type/month.
+        tests:
+          - not_null
+          - dbt_utils.expression_is_true:
+              expression: "> 0"
+
+      - name: ytd_total_eur
+        description: Year-to-date running total for this category/type, resets each January.
+        tests:
+          - not_null
+
+  - name: fct_income_vs_expense
+    description: >
+      Monthly income vs expense summary with net cash flow and 3-month
+      rolling average. Grain: year_month (one row per month).
+    columns:
+      - name: year_month
+        description: Month in YYYY-MM format. Primary key.
+        tests:
+          - unique
+          - not_null
+
+      - name: total_income_eur
+        description: Total income in EUR for the month.
+        tests:
+          - not_null
+
+      - name: total_expense_eur
+        description: Total expenses in EUR for the month.
+        tests:
+          - not_null
+
+      - name: net_eur
+        description: Net cash flow — income minus expenses.
+        tests:
+          - not_null
+
+      - name: rolling_3m_avg_net_eur
+        description: 3-month rolling average of net_eur (current + 2 prior months).
+        tests:
+          - not_null
+
+  - name: fct_budget_variance
+    description: >
+      Actual spend vs monthly budget per category per month.
+      Categories with spend but no budget have null budget/variance columns.
+      Grain: (year_month, category).
+    columns:
+      - name: year_month
+        description: Month in YYYY-MM format.
+        tests:
+          - not_null
+
+      - name: category
+        description: Spend category.
+        tests:
+          - not_null
+
+      - name: actual_eur
+        description: Actual total spend in EUR for this category and month.
+        tests:
+          - not_null
+
+      - name: budget_eur
+        description: Monthly budget in EUR. Null if no budget is configured for this category.
+
+      - name: variance_eur
+        description: actual_eur minus budget_eur. Positive means over budget. Null if no budget.
+
+      - name: variance_pct
+        description: Variance as a percentage of budget. Null if no budget.
+
+      - name: over_budget
+        description: True when actual_eur exceeds budget_eur. Null if no budget.
+
+  - name: dim_subscription_tracker
+    description: >
+      Recurring merchants detected by appearing in 3+ distinct calendar months
+      with charges within ±2% of their median amount. Grain: merchant.
+    columns:
+      - name: merchant
+        description: Merchant name. Primary key.
+        tests:
+          - unique
+          - not_null
+
+      - name: estimated_monthly_cost_eur
+        description: Median charge amount in EUR across all qualifying occurrences.
+        tests:
+          - not_null
+          - dbt_utils.expression_is_true:
+              expression: "> 0"
+
+      - name: first_seen
+        description: Date of the earliest qualifying charge.
+        tests:
+          - not_null
+
+      - name: last_seen
+        description: Date of the most recent qualifying charge.
+        tests:
+          - not_null
+
+      - name: occurrence_count
+        description: Number of distinct calendar months with a qualifying charge.
+        tests:
+          - not_null
+          - dbt_utils.expression_is_true:
+              expression: ">= 3"

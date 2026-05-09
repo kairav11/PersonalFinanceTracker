@@ -35,7 +35,7 @@ Full specification: `project_spec.md`
 | Bronze ingestion (Sheets) | ✅ Complete | |
 | Bronze ingestion (CSV) | ✅ Complete | |
 | dbt Silver layer | ✅ Complete | |
-| dbt Gold layer | ⬜ Not started | Day 4 task |
+| dbt Gold layer | ✅ Complete | |
 | GitHub Actions workflows | ⬜ Not started | Day 5 task |
 | Streamlit dashboard | ⬜ Not started | Day 6 task |
 | End-to-end validation | ⬜ Not started | Day 7 task |
@@ -43,6 +43,37 @@ Full specification: `project_spec.md`
 ---
 
 ## Changelog
+
+### [v0.4] — 2026-05-09 — dbt Gold layer complete
+**Commit:** pending  
+**Branch:** `feature/gold-dbt`
+
+**Achieved:**
+- `fct_monthly_burn`: monthly totals by category + type in EUR, with YTD running total partitioned by calendar year
+- `fct_income_vs_expense`: monthly income vs expense with net cash flow and 3-month rolling average
+- `fct_budget_variance`: actual spend vs configured budget per category per month; computes variance_eur, variance_pct, over_budget flag; nulls where no budget is set
+- `dim_subscription_tracker`: detects recurring merchants (≥3 distinct months, charges within ±2% of median); outputs estimated monthly cost, first/last seen, occurrence count
+- `gold/schema.yml`: tests on all Gold models — all passing
+
+**Files changed:**
+```
+wealth_flow_dbt/models/gold/fct_monthly_burn.sql         (created)
+wealth_flow_dbt/models/gold/fct_income_vs_expense.sql    (created)
+wealth_flow_dbt/models/gold/fct_budget_variance.sql      (created)
+wealth_flow_dbt/models/gold/dim_subscription_tracker.sql (created)
+wealth_flow_dbt/models/gold/schema.yml                   (created)
+docs/project_log.md                                      (updated)
+```
+
+**Known issues / follow-ups:**
+- None — all Gold tests passing
+
+**Updated status table rows:**
+| Component | Old status | New status |
+|---|---|---|
+| dbt Gold layer | ⬜ Not started | ✅ Complete |
+
+
 
 ### [v0.3] — 2026-05-09 — dbt Silver layer complete + Unity Catalog migration
 **Commit:** pending  
