@@ -1,0 +1,41 @@
+# Secrets & credentials — never commit these
+.env
+*.env
+ingestion/service_account.json
+ingestion/*.json
+.streamlit/secrets.toml
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+.venv/
+venv/
+env/
+*.egg-info/
+dist/
+build/
+.pytest_cache/
+
+# dbt
+wealth_flow_dbt/target/
+wealth_flow_dbt/dbt_packages/
+wealth_flow_dbt/logs/
+wealth_flow_dbt/.user.yml
+
+# Logs
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+.claude
