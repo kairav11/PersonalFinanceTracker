@@ -1,5 +1,5 @@
 """
-CSV files in csv_uploads/ → bronze.transactions (append).
+CSV files in csv_uploads/ → workspace.bronze.transactions (append).
 Processed files are moved to csv_uploads/processed/ — never deleted.
 """
 
@@ -91,7 +91,7 @@ def _get_db_connection():
 
 def _ensure_bronze_transactions(cursor) -> None:
     cursor.execute("""
-        CREATE TABLE IF NOT EXISTS bronze.transactions (
+        CREATE TABLE IF NOT EXISTS workspace.bronze.transactions (
             transaction_id STRING,
             date           STRING,
             merchant       STRING,
@@ -112,7 +112,7 @@ def _append_rows(cursor, rows: list[dict], ingested_at: datetime) -> int:
     for row in rows:
         cursor.execute(
             """
-            INSERT INTO bronze.transactions
+            INSERT INTO workspace.bronze.transactions
                 (transaction_id, date, merchant, amount, currency, type,
                  category, account, notes, _source, _ingested_at)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)

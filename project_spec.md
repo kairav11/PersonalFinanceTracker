@@ -216,8 +216,8 @@ This document defines the functional requirements, data contracts, interface spe
 ### 5.3 Databricks Connection
 - **Connection:** `databricks-sql-connector` Python library
 - **Auth:** Personal Access Token via `DATABRICKS_TOKEN`
-- **Metastore:** Hive Metastore (Community Edition — no Unity Catalog)
-- **Table naming:** Two-part `database.table` (e.g. `gold.fct_monthly_burn`) — no catalog prefix
+- **Metastore:** Unity Catalog — `workspace` catalog (Community Edition workspace)
+- **Table naming:** Three-part `workspace.schema.table` (e.g. `workspace.gold.fct_monthly_burn`)
 - **Dashboard queries:** Read-only SELECT against Gold tables only
 
 ### 5.4 Streamlit Dashboard

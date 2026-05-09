@@ -1,0 +1,47 @@
+version: 2
+
+sources:
+  - name: bronze
+    database: workspace
+    schema: bronze
+    description: Raw ingested data from Google Sheets and CSV uploads. Append-only for transactions.
+    tables:
+      - name: transactions
+        description: >
+          Raw transaction rows from all sources. May contain duplicates —
+          deduplication happens in silver.stg_transactions.
+        columns:
+          - name: transaction_id
+            description: User-supplied identifier. Not enforced unique at Bronze.
+          - name: date
+            description: Raw date string in YYYY-MM-DD format.
+          - name: merchant
+            description: Raw merchant name string.
+          - name: amount
+            description: Raw amount string. Cast to decimal in Silver.
+          - name: currency
+            description: Raw currency string. Validated in Silver.
+          - name: type
+            description: Raw transaction type string. Validated in Silver.
+          - name: category
+            description: Spend category. Nullable.
+          - name: account
+            description: Account name. Nullable.
+          - name: notes
+            description: Free-text notes. Nullable.
+          - name: _source
+            description: Ingestion source — 'google_sheets' or 'csv_upload'.
+          - name: _ingested_at
+            description: UTC timestamp when the row was written to Bronze.
+
+      - name: budgets
+        description: >
+          Monthly budget amounts per category. Full-overwritten on every
+          ingestion run — reflects current Sheet state.
+        columns:
+          - name: category
+            description: Budget category name.
+          - name: monthly_budget_eur
+            description: Raw budget amount string. Cast to decimal in Silver.
+          - name: _ingested_at
+            description: UTC timestamp of the last ingestion run.

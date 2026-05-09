@@ -1,0 +1,82 @@
+version: 2
+
+models:
+  - name: stg_transactions
+    description: >
+      Deduplicated, type-cast transactions from Bronze. One row per unique
+      transaction_id (latest _ingested_at wins). Amount converted to EUR
+      via fixed FX rates from the fx_rates seed.
+    columns:
+      - name: transaction_id
+        description: Unique transaction identifier.
+        tests:
+          - unique
+          - not_null
+
+      - name: date
+        description: Transaction date cast to DATE.
+        tests:
+          - not_null
+
+      - name: merchant
+        description: Merchant name.
+        tests:
+          - not_null
+
+      - name: amount
+        description: Original transaction amount in the source currency.
+        tests:
+          - not_null
+          - dbt_utils.expression_is_true:
+              expression: "> 0"
+
+      - name: currency
+        description: ISO currency code.
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['EUR', 'USD', 'INR']
+
+      - name: amount_eur
+        description: Amount converted to EUR using fixed FX rates.
+        tests:
+          - not_null
+          - dbt_utils.expression_is_true:
+              expression: "> 0"
+
+      - name: type
+        description: Transaction type.
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['income', 'expense']
+
+      - name: _source
+        description: Ingestion source identifier.
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['google_sheets', 'csv_upload']
+
+      - name: _ingested_at
+        description: UTC timestamp of when this row was written to Bronze.
+        tests:
+          - not_null
+
+  - name: stg_budgets
+    description: >
+      Monthly budget amounts per category, cast to decimal.
+      Full-refreshed on every pipeline run from Bronze.
+    columns:
+      - name: category
+        description: Budget category name. Primary key.
+        tests:
+          - unique
+          - not_null
+
+      - name: monthly_budget_eur
+        description: Monthly budget amount in EUR.
+        tests:
+          - not_null
+          - dbt_utils.expression_is_true:
+              expression: "> 0"
